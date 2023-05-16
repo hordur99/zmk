@@ -35,7 +35,11 @@
     };
 };
 
-&right_encoder {
+&roller_right_encoder {
+	status = "okay";
+};
+
+&dial_right_encoder {
     status = "okay";
 };
 
