@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
+#include <kernel.h>
+#include <logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #include <zmk/display.h>
@@ -24,15 +24,15 @@ struct layer_status_state {
 
 static void set_layer_symbol(lv_obj_t *label, struct layer_status_state state) {
     if (state.label == NULL) {
-        char text[7] = {};
+        char text[6] = {};
 
-        sprintf(text, LV_SYMBOL_KEYBOARD " %i", state.index);
+        sprintf(text, LV_SYMBOL_KEYBOARD "%i", state.index);
 
         lv_label_set_text(label, text);
     } else {
-        char text[13] = {};
+        char text[12] = {};
 
-        snprintf(text, sizeof(text), LV_SYMBOL_KEYBOARD " %s", state.label);
+        snprintf(text, 12, LV_SYMBOL_KEYBOARD "%s", state.label);
 
         lv_label_set_text(label, text);
     }
@@ -54,7 +54,9 @@ ZMK_DISPLAY_WIDGET_LISTENER(widget_layer_status, struct layer_status_state, laye
 ZMK_SUBSCRIPTION(widget_layer_status, zmk_layer_state_changed);
 
 int zmk_widget_layer_status_init(struct zmk_widget_layer_status *widget, lv_obj_t *parent) {
-    widget->obj = lv_label_create(parent);
+    widget->obj = lv_label_create(parent, NULL);
+
+    lv_obj_set_size(widget->obj, 40, 15);
 
     sys_slist_append(&widgets, &widget->node);
 

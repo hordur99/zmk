@@ -6,12 +6,11 @@
 
 #pragma once
 
-#include <zephyr/drivers/sensor.h>
 #include <zephyr/types.h>
 #include <stddef.h>
-#include <zephyr/sys/util.h>
+#include <sys/util.h>
 #include <string.h>
-#include <zephyr/device.h>
+#include <device.h>
 #include <zmk/keys.h>
 #include <zmk/behavior.h>
 
@@ -26,8 +25,8 @@
 typedef int (*behavior_keymap_binding_callback_t)(struct zmk_behavior_binding *binding,
                                                   struct zmk_behavior_binding_event event);
 typedef int (*behavior_sensor_keymap_binding_callback_t)(struct zmk_behavior_binding *binding,
-                                                         const struct sensor_value value,
-                                                         struct zmk_behavior_binding_event event);
+                                                         const struct device *sensor,
+                                                         int64_t timestamp);
 
 enum behavior_locality {
     BEHAVIOR_LOCALITY_CENTRAL,
@@ -151,22 +150,21 @@ static inline int z_impl_behavior_keymap_binding_released(struct zmk_behavior_bi
 
 /**
  * @brief Handle the a sensor keymap binding being triggered
- * @param binding Sensor keymap binding which was triggered.
+ * @param dev Pointer to the device structure for the driver instance.
  * @param sensor Pointer to the sensor device structure for the sensor driver instance.
- * @param virtual_key_position ZMK_KEYMAP_LEN + sensor number
- * @param timestamp Time at which the binding was triggered.
+ * @param param1 User parameter specified at time of behavior binding.
+ * @param param2 User parameter specified at time of behavior binding.
  *
  * @retval 0 If successful.
  * @retval Negative errno code if failure.
  */
 __syscall int behavior_sensor_keymap_binding_triggered(struct zmk_behavior_binding *binding,
-                                                       const struct sensor_value value,
-                                                       struct zmk_behavior_binding_event event);
+                                                       const struct device *sensor,
+                                                       int64_t timestamp);
 
 static inline int
 z_impl_behavior_sensor_keymap_binding_triggered(struct zmk_behavior_binding *binding,
-                                                const struct sensor_value value,
-                                                struct zmk_behavior_binding_event event) {
+                                                const struct device *sensor, int64_t timestamp) {
     const struct device *dev = device_get_binding(binding->behavior_dev);
 
     if (dev == NULL) {
@@ -179,7 +177,7 @@ z_impl_behavior_sensor_keymap_binding_triggered(struct zmk_behavior_binding *bin
         return -ENOTSUP;
     }
 
-    return api->sensor_binding_triggered(binding, value, event);
+    return api->sensor_binding_triggered(binding, sensor, timestamp);
 }
 
 /**

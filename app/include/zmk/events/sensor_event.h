@@ -6,13 +6,12 @@
 
 #pragma once
 
-#include <zephyr/drivers/sensor.h>
-#include <zephyr/kernel.h>
+#include <zephyr.h>
 #include <zmk/event_manager.h>
-#include <zephyr/device.h>
+#include <device.h>
 struct zmk_sensor_event {
     uint8_t sensor_number;
-    struct sensor_value value;
+    const struct device *sensor;
     int64_t timestamp;
 };
 

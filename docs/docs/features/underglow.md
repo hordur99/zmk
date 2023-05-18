@@ -52,35 +52,25 @@ For example, the Kyria shield has a `boards/nice_nano.overlay` file that defines
 
 ### nRF52-based boards
 
-With nRF52 boards, you can just use `&spi3` and define the pins you want to use.
+With nRF52 boards, you can just use `&spi1` and define the pins you want to use.
+
+To identify which pin number you need to put in the config you need do to a bit of math. You need the hardware port and run it through a function.
+**32 \* X + Y** = `<Pin number>` where X is first part of the hardware port "PX.01" and Y is the second part of the hardware port "P1.Y".
+
+(_P1.13_ would give you _32 \* 1 + 13_ = `<45>` and P0.15 would give you _32 \* 0 + 15_ = `<15>`)
 
 Here's an example on a definition that uses P0.06:
 
 ```
 #include <dt-bindings/led/led.h>
 
-&pinctrl {
-    spi3_default: spi3_default {
-        group1 {
-            psels = <NRF_PSEL(SPIM_MOSI, 0, 6)>;
-        };
-    };
-
-    spi3_sleep: spi3_sleep {
-        group1 {
-            psels = <NRF_PSEL(SPIM_MOSI, 0, 6)>;
-            low-power-enable;
-        };
-    };
-};
-
-&spi3 {
+&spi1 {
   compatible = "nordic,nrf-spim";
   status = "okay";
-
-  pinctrl-0 = <&spi3_default>;
-  pinctrl-1 = <&spi3_sleep>;
-  pinctrl-names = "default", "sleep";
+  mosi-pin = <6>;
+  // Unused pins, needed for SPI definition, but not used by the ws2812 driver itself.
+  sck-pin = <5>;
+  miso-pin = <7>;
 
   led_strip: ws2812@0 {
     compatible = "worldsemi,ws2812-spi";
@@ -119,12 +109,12 @@ If your board/shield uses LEDs that require the data sent in a different order, 
 
 For other boards, you must select an SPI definition that has the `MOSI` pin as your data pin going to your LED strip.
 
-Here's another example for a non-nRF52 board on `spi3`:
+Here's another example for a non-nRF52 board on `spi1`:
 
 ```
 #include <dt-bindings/led/led.h>
 
-&spi3 {
+&spi1 {
 
   led_strip: ws2812@0 {
     compatible = "worldsemi,ws2812-spi";
@@ -149,9 +139,9 @@ Once you have your `led_strip` properly defined you need to add it to the root d
 
 ```
 / {
-    chosen {
-        zmk,underglow = &led_strip;
-    };
+	chosen {
+		zmk,underglow = &led_strip;
+	};
 };
 ```
 

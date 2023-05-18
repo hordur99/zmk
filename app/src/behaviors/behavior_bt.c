@@ -6,15 +6,14 @@
 
 #define DT_DRV_COMPAT zmk_behavior_bluetooth
 
-#include <zephyr/device.h>
-#include <zephyr/bluetooth/conn.h>
-
-#include <zephyr/logging/log.h>
-LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
-
+#include <device.h>
 #include <drivers/behavior.h>
 #include <dt-bindings/zmk/bt.h>
+#include <bluetooth/conn.h>
+#include <logging/log.h>
 #include <zmk/behavior.h>
+
+LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #include <zmk/ble.h>
 
