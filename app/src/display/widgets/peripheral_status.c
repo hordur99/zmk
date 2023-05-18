@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <zephyr/kernel.h>
+#include <kernel.h>
+#include <bluetooth/services/bas.h>
 
-#include <zephyr/logging/log.h>
+#include <logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #include <zmk/display.h>
@@ -44,7 +45,9 @@ ZMK_SUBSCRIPTION(widget_peripheral_status, zmk_split_peripheral_status_changed);
 
 int zmk_widget_peripheral_status_init(struct zmk_widget_peripheral_status *widget,
                                       lv_obj_t *parent) {
-    widget->obj = lv_label_create(parent);
+    widget->obj = lv_label_create(parent, NULL);
+
+    lv_obj_set_size(widget->obj, 40, 15);
 
     sys_slist_append(&widgets, &widget->node);
 

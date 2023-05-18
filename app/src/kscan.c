@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/device.h>
-#include <zephyr/bluetooth/addr.h>
-#include <zephyr/drivers/kscan.h>
-#include <zephyr/logging/log.h>
+#include <zephyr.h>
+#include <device.h>
+#include <bluetooth/addr.h>
+#include <drivers/kscan.h>
+#include <logging/log.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -47,14 +47,7 @@ void zmk_kscan_process_msgq(struct k_work *item) {
 
     while (k_msgq_get(&zmk_kscan_msgq, &ev, K_NO_WAIT) == 0) {
         bool pressed = (ev.state == ZMK_KSCAN_EVENT_STATE_PRESSED);
-        int32_t position = zmk_matrix_transform_row_column_to_position(ev.row, ev.column);
-
-        if (position < 0) {
-            LOG_WRN("Not found in transform: row: %d, col: %d, pressed: %s", ev.row, ev.column,
-                    (pressed ? "true" : "false"));
-            continue;
-        }
-
+        uint32_t position = zmk_matrix_transform_row_column_to_position(ev.row, ev.column);
         LOG_DBG("Row: %d, col: %d, position: %d, pressed: %s", ev.row, ev.column, position,
                 (pressed ? "true" : "false"));
         ZMK_EVENT_RAISE(new_zmk_position_state_changed(
@@ -65,7 +58,8 @@ void zmk_kscan_process_msgq(struct k_work *item) {
     }
 }
 
-int zmk_kscan_init(const struct device *dev) {
+int zmk_kscan_init(char *name) {
+    const struct device *dev = device_get_binding(name);
     if (dev == NULL) {
         LOG_ERR("Failed to get the KSCAN device");
         return -EINVAL;

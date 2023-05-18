@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <zephyr/drivers/sensor.h>
-#include <zephyr/devicetree.h>
-#include <zephyr/init.h>
+#include <drivers/sensor.h>
+#include <devicetree.h>
+#include <init.h>
 
-#include <zephyr/logging/log.h>
+#include <logging/log.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -25,20 +25,16 @@ struct sensors_data_item {
 };
 
 #define _SENSOR_ITEM(node)                                                                         \
-    {                                                                                              \
-        .dev = NULL, .trigger = {.type = SENSOR_TRIG_DELTA, .chan = SENSOR_CHAN_ROTATION }         \
-    }
-
-#define SENSOR_ITEM(idx, _node)                                                                    \
+    {.dev = NULL, .trigger = {.type = SENSOR_TRIG_DELTA, .chan = SENSOR_CHAN_ROTATION}},
+#define SENSOR_ITEM(idx, _)                                                                        \
     COND_CODE_1(DT_NODE_HAS_STATUS(ZMK_KEYMAP_SENSORS_BY_IDX(idx), okay),                          \
-                (_SENSOR_ITEM(ZMK_KEYMAP_SENSORS_BY_IDX(idx))), ({}))
+                (_SENSOR_ITEM(ZMK_KEYMAP_SENSORS_BY_IDX(idx))), ())
 
-static struct sensors_data_item sensors[] = {LISTIFY(ZMK_KEYMAP_SENSORS_LEN, SENSOR_ITEM, (, ), 0)};
+static struct sensors_data_item sensors[] = {UTIL_LISTIFY(ZMK_KEYMAP_SENSORS_LEN, SENSOR_ITEM, 0)};
 
-static void zmk_sensors_trigger_handler(const struct device *dev,
-                                        const struct sensor_trigger *trigger) {
+static void zmk_sensors_trigger_handler(const struct device *dev, struct sensor_trigger *trigger) {
     int err;
-    const struct sensors_data_item *item = CONTAINER_OF(trigger, struct sensors_data_item, trigger);
+    struct sensors_data_item *item = CONTAINER_OF(trigger, struct sensors_data_item, trigger);
 
     LOG_DBG("sensor %d", item->sensor_number);
 
@@ -48,15 +44,8 @@ static void zmk_sensors_trigger_handler(const struct device *dev,
         return;
     }
 
-    struct sensor_value value;
-    err = sensor_channel_get(dev, SENSOR_CHAN_ROTATION, &value);
-    if (err) {
-        LOG_WRN("Failed to get sensor rotation value: %d", err);
-        return;
-    }
-
     ZMK_EVENT_RAISE(new_zmk_sensor_event((struct zmk_sensor_event){
-        .sensor_number = item->sensor_number, .value = value, .timestamp = k_uptime_get()}));
+        .sensor_number = item->sensor_number, .sensor = dev, .timestamp = k_uptime_get()}));
 }
 
 static void zmk_sensors_init_item(const char *node, uint8_t i, uint8_t abs_i) {
@@ -73,8 +62,7 @@ static void zmk_sensors_init_item(const char *node, uint8_t i, uint8_t abs_i) {
     sensor_trigger_set(sensors[i].dev, &sensors[i].trigger, zmk_sensors_trigger_handler);
 }
 
-#define _SENSOR_INIT(node)                                                                         \
-    zmk_sensors_init_item(DT_PROP(node, label), local_index++, absolute_index++);
+#define _SENSOR_INIT(node) zmk_sensors_init_item(DT_LABEL(node), local_index++, absolute_index++);
 #define SENSOR_INIT(idx, _i)                                                                       \
     COND_CODE_1(DT_NODE_HAS_STATUS(ZMK_KEYMAP_SENSORS_BY_IDX(idx), okay),                          \
                 (_SENSOR_INIT(ZMK_KEYMAP_SENSORS_BY_IDX(idx))), (absolute_index++;))
@@ -83,7 +71,7 @@ static int zmk_sensors_init(const struct device *_arg) {
     int local_index = 0;
     int absolute_index = 0;
 
-    LISTIFY(ZMK_KEYMAP_SENSORS_LEN, SENSOR_INIT, (), 0)
+    UTIL_LISTIFY(ZMK_KEYMAP_SENSORS_LEN, SENSOR_INIT, 0)
     return 0;
 }
 

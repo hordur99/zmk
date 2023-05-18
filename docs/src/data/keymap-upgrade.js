@@ -81,5 +81,4 @@ export const Codes = {
 export const Behaviors = {
   cp: "kp",
   inc_dec_cp: "inc_dec_kp",
-  reset: "sys_reset",
 };
